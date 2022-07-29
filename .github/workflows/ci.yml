@@ -29,6 +29,10 @@ jobs:
           sudo bash ./scripts/install.sh
           sudo bash ./scripts/run.sh
 
+      - name: The `git diff` showing whether the pre-commit mandated extra changes to the repository files
+        if: failure()
+        run: git diff
+
   validate:
     name: Validate
     runs-on: ubuntu-latest
