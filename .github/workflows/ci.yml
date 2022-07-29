@@ -25,7 +25,7 @@ jobs:
           python-version: '3.9.4'
 
       - name: Run pre-commit framework as the developer should run it
-        run: sudo ../../scripts/install.sh && sudo ../../scripts/run.sh
+        run: sudo bash ./scripts/install.sh && sudo ./scripts/run.sh
 
   validate:
     name: Validate
@@ -78,7 +78,7 @@ jobs:
 
   release:
     name: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [validate]
     runs-on: ubuntu-latest
 
