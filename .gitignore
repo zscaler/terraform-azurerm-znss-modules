@@ -39,16 +39,13 @@
 crash.log
 credentials.json
 
-# Zscaler specific
-init-cfg.txt
-temp
-terraform.rc
-tmp
-local_test
-
 # Auto variables
 terraform.tfvars
 terraform.tfvars.json
 *.auto.tfvars
 *.auto.tfvars.json
+*.tfplan
+tfplan.*
+
+NssCertificate.zip
 

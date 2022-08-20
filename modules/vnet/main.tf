@@ -123,9 +123,48 @@ resource "azurerm_route" "this" {
   next_hop_in_ip_address = try(each.value.route.next_hop_in_ip_address, null)
 }
 
-#------------------------------------------------------
+# ------------------------------------------------------
+# Azure NAT Gateway
+# ------------------------------------------------------
+resource "azurerm_public_ip_prefix" "this" {
+  name                = "ng-${var.ip_prefix_name}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  prefix_length       = 30
+  zones               = ["1"]
+}
+
+resource "azurerm_nat_gateway" "this" {
+  name                    = "ng${var.nat_gateway_name}"
+  location                = var.location
+  resource_group_name     = var.resource_group_name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  zones                   = ["1"]
+  # subnet_id               = azurerm_subnet.this[each].id
+}
+
+# ------------------------------------------------------
+# Azure NAT Gateway integration with IP prefix
+# ------------------------------------------------------
+resource "azurerm_nat_gateway_public_ip_prefix_association" "this" {
+  nat_gateway_id      = azurerm_nat_gateway.this.id
+  public_ip_prefix_id = azurerm_public_ip_prefix.this.id
+}
+
+# ------------------------------------------------------
+# Azure NAT Gateway integration with Subnets
+# ------------------------------------------------------
+resource "azurerm_subnet_nat_gateway_association" "this" {
+  for_each = var.subnets
+
+  nat_gateway_id = azurerm_nat_gateway.this.id
+  subnet_id      = azurerm_subnet.this[each.key].id
+}
+
+#-------------------------------------------------------
 # Azure Network Security Group Integration with Subnets
-#------------------------------------------------------
+#-------------------------------------------------------
 resource "azurerm_subnet_network_security_group_association" "this" {
   for_each = { for k, v in var.subnets : k => v if lookup(v, "network_security_group", "") != "" }
 

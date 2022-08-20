@@ -30,6 +30,18 @@ variable "address_space" {
   type        = list(string)
 }
 
+variable "nat_gateway_name" {
+  description = "The name of the NAT Gateway to create."
+  type        = string
+  default     = "nat_gateway_1"
+}
+
+variable "ip_prefix_name" {
+  description = "The name of the Virtual Network to create."
+  type        = string
+  default     = "ip_prefix_1"
+}
+
 variable "network_security_groups" {
   description = <<-EOF
   Map of Network Security Groups to create. The key of each entry acts as the Network Security Group name.

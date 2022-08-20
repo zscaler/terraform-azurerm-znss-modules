@@ -112,3 +112,11 @@ variable "automation_account_name" {
 variable "copy_vhd_url" {
   type = string
 }
+
+variable "asset_container_name" {
+  type = string
+}
+
+variable "file_to_copy" {
+  type = string
+}

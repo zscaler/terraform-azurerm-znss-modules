@@ -26,9 +26,9 @@ resource "azurerm_storage_account" "this" {
   }
 }
 
-#-------------------------------
-# Storage Container Creation
-#-------------------------------
+#-----------------------------------------
+# Storage Container Creation for VHD Copy
+#-----------------------------------------
 resource "azurerm_storage_container" "this" {
   name                  = var.containers_name
   storage_account_name  = var.storage_account_name
@@ -38,9 +38,35 @@ resource "azurerm_storage_container" "this" {
   ]
 }
 
-#-------------------------------
+#-------------------------------------------------
+# Storage Container Creation for storing ZIP file
+#-------------------------------------------------
+resource "azurerm_storage_container" "blobcontainer" {
+  name                  = var.asset_container_name
+  storage_account_name  = var.storage_account_name
+  container_access_type = "blob"
+   depends_on = [
+    azurerm_storage_account.this
+  ]
+}
+
+#-------------------------------------------------
+# Uplaod the file from Asssets folder to container
+#-------------------------------------------------
+resource "azurerm_storage_blob" "example" {
+  name                   = var.file_to_copy
+  storage_account_name   = azurerm_storage_account.this.name
+  storage_container_name = azurerm_storage_container.blobcontainer.name
+  type                   = "Block"
+  source                 = "./../../assets/${var.file_to_copy}"
+  depends_on = [
+    azurerm_storage_container.blobcontainer
+  ]
+}
+
+#----------------------------------
 # Azure Automation Account Creation
-#-------------------------------
+#----------------------------------
 resource "azurerm_automation_account" "this" {
   name                = var.automation_account_name
   location            = var.location
@@ -52,9 +78,9 @@ resource "azurerm_automation_account" "this" {
   ]
 }
 
-#-------------------------------
+#-------------------------------------
 # Azure Automation Account Credential
-#-------------------------------
+#-------------------------------------
 resource "azurerm_automation_credential" "this" {
   name                    = "automationCredential"
   resource_group_name     = var.resource_group_name
@@ -67,9 +93,9 @@ resource "azurerm_automation_credential" "this" {
   ]
 }
 
-#-------------------------------
-# Azure Automation Account Runbook
-#-------------------------------
+#-----------------------------------------
+# Azure Automation Account Runbook for VHD
+#-----------------------------------------
 resource "azurerm_automation_runbook" "this" {
   name                    = "copyvhd"
   location                = var.location
@@ -77,7 +103,7 @@ resource "azurerm_automation_runbook" "this" {
   automation_account_name = azurerm_automation_account.this.name
   log_verbose             = "false"
   log_progress            = "false"
-  description             = "This is runbook"
+  description             = "This is runbook for copying the vhd file to the storage container"
   runbook_type            = "PowerShellWorkflow"
 
   publish_content_link {
@@ -88,9 +114,34 @@ resource "azurerm_automation_runbook" "this" {
   ]
 }
 
-#-------------------------------
-# Azure Automation Account Webhook
-#-------------------------------
+#-----------------------------------------
+# Get content of PowerShell File
+#-----------------------------------------
+data "local_file" "script_ps1" {
+  filename = "../../ssh/script.ps1"
+}
+
+#---------------------------------------------------------------
+# Azure Automation Account Runbook for deleting Assets Container
+#---------------------------------------------------------------
+resource "azurerm_automation_runbook" "delete_container" {
+  name                    = "deletecontainer"
+  location                = var.location
+  resource_group_name     = var.resource_group_name
+  automation_account_name = azurerm_automation_account.this.name
+  log_verbose             = "false"
+  log_progress            = "false"
+  description             = "This Runbook is for deleting the zip file container"
+  runbook_type            = "PowerShellWorkflow"
+  content                 = data.local_file.script_ps1.content
+  depends_on = [
+    azurerm_automation_credential.this
+  ]
+}
+
+#-----------------------------------------
+# Azure Automation Account Webhook for VHD
+#-----------------------------------------
 resource "azurerm_automation_webhook" "this" {
   name                    = "webhook"
   resource_group_name     = var.resource_group_name
@@ -110,8 +161,28 @@ resource "azurerm_automation_webhook" "this" {
   ]
 }
 
+
+#--------------------------------------------------------
+# Azure Automation Account Webhook for Container deletion
+#--------------------------------------------------------
+resource "azurerm_automation_webhook" "containerwebhook" {
+  name                    = "webhookcontainer"
+  resource_group_name     = var.resource_group_name
+  automation_account_name = var.automation_account_name
+  expiry_time             = "2022-12-31T00:00:00Z"
+  enabled                 = true
+  runbook_name            = azurerm_automation_runbook.delete_container.name
+  parameters = {
+    newstorageaccountname = var.storage_account_name
+    newstorageaccountcontainername = var.asset_container_name
+  }
+  depends_on = [
+    azurerm_automation_runbook.delete_container
+  ]
+}
+
 #-------------------------------
-# Invoke WebHook through API
+# Invoke VHD WebHook through API
 #-------------------------------
 resource "null_resource" "this" {
     provisioner "local-exec" {
@@ -120,5 +191,24 @@ resource "null_resource" "this" {
     }
     depends_on = [
     azurerm_automation_webhook.this
+  ]
+}
+
+#--------------------------------------------
+# Delay in deployment before provisioining VM
+#--------------------------------------------
+resource "null_resource" "before" {
+}
+resource "null_resource" "delay" {
+  provisioner "local-exec" {
+    command = "start-sleep 1800"
+    interpreter = ["pwsh", "-Command"]
+  }
+  triggers = {
+    "before" = "${null_resource.before.id}"
+  }
+  depends_on = [
+    null_resource.before,
+    null_resource.this
   ]
 }

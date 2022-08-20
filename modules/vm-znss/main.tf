@@ -39,23 +39,6 @@ resource "azurerm_network_interface" "this" {
 }
 
 #-------------------------------
-# Delay in deployment
-#-------------------------------
-resource "null_resource" "before" {
-}
-
-#waiting time for disk to get copied
-resource "null_resource" "delay" {
-  provisioner "local-exec" {
-    command = "start-sleep 1800"
-    interpreter = ["pwsh", "-Command"]
-  }
-  triggers = {
-    "before" = "${null_resource.before.id}"
-  }
-}
-
-#-------------------------------
 # Azure Virtual Machine
 #-------------------------------
 resource "azurerm_virtual_machine" "this" {
@@ -91,13 +74,70 @@ resource "azurerm_virtual_machine" "this" {
     identity_ids = var.identity_ids
   }
   depends_on = [
-    null_resource.delay
+    azurerm_network_interface.this
   ]
 }
 
 #-------------------------------
-# Azure App Insight
+# Delay in running shell command
 #-------------------------------
+resource "null_resource" "before1" {
+}
+
+#--------------------------------------------
+# Waiting time before exec inside the machine
+#--------------------------------------------
+resource "null_resource" "delay1" {
+  provisioner "local-exec" {
+    command = "start-sleep 120"
+    interpreter = ["pwsh", "-Command"]
+  }
+  triggers = {
+    "before" = "${null_resource.before1.id}"
+  }
+  depends_on = [
+    null_resource.before1
+  ]
+}
+
+#-------------------------------------------------
+# Local variable to store the ip address of the vm
+#-------------------------------------------------
+locals {
+  vm_public_ip = azurerm_public_ip.this[0].ip_address
+}
+
+resource "null_resource" "script_windows" {
+  count = var.is_system_windows ? 1 : 0
+
+  provisioner "local-exec" {
+    interpreter = ["pwsh", "-Command"]
+    command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/${var.file_to_copy} -o /home/zsroot/${var.file_to_copy}"
+  }
+  depends_on = [
+    azurerm_virtual_machine.this,
+    null_resource.delay1
+  ]
+}
+
+resource "null_resource" "script_linux" {
+  count = var.is_system_windows ? 0 : 1
+
+  provisioner "local-exec" {
+    interpreter = ["pwsh", "-Command"]
+    command     = <<-EOT
+      sshpass -p ${var.admin_password} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${var.admin_username} ${local.vm_public_ip} "curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/${var.file_to_copy} -o /home/zsroot/${var.file_to_copy}"
+    EOT
+  }
+  depends_on = [
+    azurerm_virtual_machine.this,
+    null_resource.delay1
+  ]
+}
+
+#--------------------
+# Azure App Insight
+#--------------------
 resource "azurerm_application_insights" "this" {
   count = var.metrics_retention_in_days != 0 ? 1 : 0
 
@@ -109,3 +149,17 @@ resource "azurerm_application_insights" "this" {
   tags                = var.tags
 }
 
+
+#--------------------------------------------------
+# Invoke WebHook through API for container deletion
+#--------------------------------------------------
+resource "null_resource" "this" {
+    provisioner "local-exec" {
+        command = "Invoke-WebRequest -Method Post -Uri ${var.container_uri}"
+        interpreter = ["pwsh", "-Command"]
+    }
+    depends_on = [
+    null_resource.script_windows,
+    null_resource.script_linux
+  ]
+}

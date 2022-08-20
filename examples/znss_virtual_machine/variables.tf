@@ -24,6 +24,22 @@ variable "address_space" {
   type        = list(string)
 }
 
+variable "pswd_auth" {
+  type = bool
+}
+
+variable "admin_username" {
+  type = string
+}
+
+variable "admin_password" {
+  type = string
+}
+
+variable "is_system_windows" {
+  type        = string
+}
+
 variable "network_security_groups" {
   description = <<-EOF
   Map of Network Security Groups to create. The key of each entry acts as the Network Security Group name.
@@ -201,4 +217,38 @@ variable "avzones" {
   EOF
   default     = []
   type        = list(string)
+}
+
+variable "mgmt_nic_name" {
+  type = string
+  default = "Zscaler-NSS-MGMT-NIC"
+}
+
+variable "srvc_nic_name" {
+  type = string
+  default = "Zscaler-NSS-SRVC-NIC"
+}
+
+variable "nat_gateway_name" {
+  description = "The name of the NAT Gateway to create."
+  type        = string
+  default     = "nat_gateway_1"
+}
+
+variable "ip_prefix_name" {
+  description = "The name of the ip prefix  to create."
+  type        = string
+  default     = "ip_prefix_1"
+}
+
+variable "asset_container_name" {
+  description = "The name of the container for storing zip file from assets folder"
+  type        = string
+  default     = "assets"
+}
+
+variable "file_to_copy" {
+  description = "The name of the file to copy inside virtual machine"
+  type        = string
+  default     = "TestFolder.zip"
 }

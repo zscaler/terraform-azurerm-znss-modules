@@ -26,6 +26,18 @@ variable "avset_id" {
   type        = string
 }
 
+variable "admin_username" {
+   type = string
+}
+
+variable "admin_password" {
+   type = string
+}
+
+variable "is_system_windows" {
+   type = bool
+}
+
 variable "interfaces" {
   description = <<-EOF
   List of the network interface specifications.
@@ -150,4 +162,18 @@ variable "containers_name" {
   type        = string
 }
 
-variable "blob_name" {}
+variable "blob_name" {
+  type = string
+}
+
+variable "container_uri" {
+  type = string
+}
+
+variable "asset_container_name" {
+  type = string
+}
+
+variable "file_to_copy" {
+  type = string
+}
