@@ -13,8 +13,9 @@ repos:
           --args=--only=terraform_naming_convention,
           --args=--only=terraform_workspace_remote,
         ]
-
+        
   - repo: https://github.com/ZscalerCWP/iac-pre-commit-hooks
     rev: v0.0.1
     hooks:
-    - id: iac-scanner-pre-commit
+    - id: zscaler-iac-scanner
+
