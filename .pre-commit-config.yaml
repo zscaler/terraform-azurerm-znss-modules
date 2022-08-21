@@ -1,8 +1,8 @@
 repos:
   - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.68.1 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
+    rev: v1.74.1 # Get the latest from: https://github.com/antonbabenko/pre-commit-terraform/releases
     hooks:
-      - id: terraform_fmt
+      - id: terraform_fmt 
       - id: terraform_docs
         args: ['--args=--lockfile=false']
       - id: terraform_tflint
@@ -12,7 +12,6 @@ repos:
           --args=--only=terraform_module_pinned_source,
           --args=--only=terraform_naming_convention,
           --args=--only=terraform_workspace_remote,
-        ]
         
   - repo: https://github.com/ZscalerCWP/iac-pre-commit-hooks
     rev: v0.0.1
