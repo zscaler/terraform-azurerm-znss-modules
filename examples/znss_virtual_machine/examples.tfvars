@@ -116,7 +116,9 @@ srvc_nic_name           = "Zscaler-NSS-SRVC-NIC"
 nat_gateway_name        = "nat_gateway_1"
 ip_prefix_name          = "ip_prefix_1"
 pswd_auth               = true
+
 # Add virtual machine credentials here!!!
+# These are test credentials and should be replaced with real ones prior to running the template
 admin_username       = "zsroot"
 admin_password       = "zsroot"
 asset_container_name = "assets"
