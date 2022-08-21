@@ -48,4 +48,7 @@ terraform.tfvars.json
 tfplan.*
 
 NssCertificate.zip
+local_test
+./local_test
+
 
