@@ -2,7 +2,7 @@
 
 # run.sh - Run the usual pre-commit checks.
 
-set -euo pipefail
+# set -euo pipefail
 
 pre-commit run --all-files terraform_fmt 
 pre-commit run --all-files terraform_docs 
