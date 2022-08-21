@@ -50,8 +50,8 @@ module "bootstrap" {
 #---------------------------------------------------------------
 # Module for Virtual Machine and dependent resources deployment
 #----------------------------------------------------------------
-module "vm-znss" {
-  source = "../../modules/vm-znss"
+module "vmznss" {
+  source = "../../modules/vmznss"
 
   location             = var.location
   resource_group_name  = azurerm_resource_group.this.name

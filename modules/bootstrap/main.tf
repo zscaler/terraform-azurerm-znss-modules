@@ -2,6 +2,9 @@
 # Storage Account creation
 #----------------------------------------------------------
 resource "azurerm_storage_account" "this" {
+  #zs:skip=ZS-AZURE-00003 Temporary Public Storage to Store NSSCertificate.zip
+  #zs:skip=ZS-AZURE-00016 Encryption not supported for unmanaged disks
+  #zs:skip=ZS-AZURE-00043 Encryption not supported for unmanaged disks
   name                      = var.storage_account_name
   resource_group_name       = var.resource_group_name
   location                  = var.location
@@ -33,7 +36,7 @@ resource "azurerm_storage_container" "this" {
   name                  = var.containers_name
   storage_account_name  = var.storage_account_name
   container_access_type = var.containers_access_type
-   depends_on = [
+  depends_on = [
     azurerm_storage_account.this
   ]
 }
@@ -42,10 +45,11 @@ resource "azurerm_storage_container" "this" {
 # Storage Container Creation for storing ZIP file
 #-------------------------------------------------
 resource "azurerm_storage_container" "blobcontainer" {
+  #zs:skip=ZS-AZURE-00030 - Encryption unsupported for unmanaged disks
   name                  = var.asset_container_name
   storage_account_name  = var.storage_account_name
   container_access_type = "blob"
-   depends_on = [
+  depends_on = [
     azurerm_storage_account.this
   ]
 }
@@ -54,6 +58,7 @@ resource "azurerm_storage_container" "blobcontainer" {
 # Uplaod the file from Asssets folder to container
 #-------------------------------------------------
 resource "azurerm_storage_blob" "example" {
+  #zs:skip=ZS-AZURE-00030 - Encryption unsupported for unmanaged disks
   name                   = var.file_to_copy
   storage_account_name   = azurerm_storage_account.this.name
   storage_container_name = azurerm_storage_container.blobcontainer.name
@@ -68,6 +73,7 @@ resource "azurerm_storage_blob" "example" {
 # Azure Automation Account Creation
 #----------------------------------
 resource "azurerm_automation_account" "this" {
+  #zs:skip=ZS-AZURE-00030 - Encryption unsupported for unmanaged disks
   name                = var.automation_account_name
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -150,11 +156,11 @@ resource "azurerm_automation_webhook" "this" {
   enabled                 = true
   runbook_name            = azurerm_automation_runbook.this.name
   parameters = {
-    newstorageaccountname = var.storage_account_name
+    newstorageaccountname          = var.storage_account_name
     newstorageaccountcontainername = var.containers_name
-    destvhdname = var.blob_name
-    vhdurl = var.osdisk
-    sastoken = var.sastok
+    destvhdname                    = var.blob_name
+    vhdurl                         = var.osdisk
+    sastoken                       = var.sastok
   }
   depends_on = [
     azurerm_automation_runbook.this
@@ -173,7 +179,7 @@ resource "azurerm_automation_webhook" "containerwebhook" {
   enabled                 = true
   runbook_name            = azurerm_automation_runbook.delete_container.name
   parameters = {
-    newstorageaccountname = var.storage_account_name
+    newstorageaccountname          = var.storage_account_name
     newstorageaccountcontainername = var.asset_container_name
   }
   depends_on = [
@@ -185,11 +191,11 @@ resource "azurerm_automation_webhook" "containerwebhook" {
 # Invoke VHD WebHook through API
 #-------------------------------
 resource "null_resource" "this" {
-    provisioner "local-exec" {
-        command = "Invoke-WebRequest -Method Post -Uri ${azurerm_automation_webhook.this.uri}"
-        interpreter = ["pwsh", "-Command"]
-    }
-    depends_on = [
+  provisioner "local-exec" {
+    command     = "Invoke-WebRequest -Method Post -Uri ${azurerm_automation_webhook.this.uri}"
+    interpreter = ["pwsh", "-Command"]
+  }
+  depends_on = [
     azurerm_automation_webhook.this
   ]
 }
@@ -201,11 +207,11 @@ resource "null_resource" "before" {
 }
 resource "null_resource" "delay" {
   provisioner "local-exec" {
-    command = "start-sleep 1800"
+    command     = "start-sleep 1800"
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
-    "before" = "${null_resource.before.id}"
+    "before" = null_resource.before.id
   }
   depends_on = [
     null_resource.before,

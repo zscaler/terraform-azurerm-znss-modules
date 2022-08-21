@@ -42,24 +42,25 @@ resource "azurerm_network_interface" "this" {
 # Azure Virtual Machine
 #-------------------------------
 resource "azurerm_virtual_machine" "this" {
-  name                             = "${var.resource_group_name}-vm"
-  location                         = var.location
-  resource_group_name              = var.resource_group_name
-  vm_size                          = var.vm_size
-  availability_set_id              = var.avset_id
-  primary_network_interface_id     = azurerm_network_interface.this[0].id
+  #zs:skip=ZS-AZURE-00041 Only Managed Disks Available
+  name                         = "${var.resource_group_name}-vm"
+  location                     = var.location
+  resource_group_name          = var.resource_group_name
+  vm_size                      = var.vm_size
+  availability_set_id          = var.avset_id
+  primary_network_interface_id = azurerm_network_interface.this[0].id
 
   network_interface_ids = [for k, v in azurerm_network_interface.this : v.id]
 
   storage_os_disk {
-    create_option     = "Attach"
-    name              = "${var.resource_group_name}_osdisk.vhd"
-    os_type           = "Linux"
-    vhd_uri           = "https://${var.storage_account_name}.blob.core.windows.net/${var.containers_name}/${var.blob_name}"
-    disk_size_gb      = "600"
-    caching           = "ReadWrite"
+    create_option = "Attach"
+    name          = "${var.resource_group_name}_osdisk.vhd"
+    os_type       = "Linux"
+    vhd_uri       = "https://${var.storage_account_name}.blob.core.windows.net/${var.containers_name}/${var.blob_name}"
+    disk_size_gb  = "600"
+    caching       = "ReadWrite"
   }
-  delete_os_disk_on_termination    = true
+  delete_os_disk_on_termination = true
   dynamic "boot_diagnostics" {
     for_each = var.diagnostics_storage_uri != null ? ["one"] : []
 
@@ -89,11 +90,11 @@ resource "null_resource" "before1" {
 #--------------------------------------------
 resource "null_resource" "delay1" {
   provisioner "local-exec" {
-    command = "start-sleep 120"
+    command     = "start-sleep 120"
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
-    "before" = "${null_resource.before1.id}"
+    "before" = null_resource.before1.id
   }
   depends_on = [
     null_resource.before1
@@ -154,11 +155,11 @@ resource "azurerm_application_insights" "this" {
 # Invoke WebHook through API for container deletion
 #--------------------------------------------------
 resource "null_resource" "this" {
-    provisioner "local-exec" {
-        command = "Invoke-WebRequest -Method Post -Uri ${var.container_uri}"
-        interpreter = ["pwsh", "-Command"]
-    }
-    depends_on = [
+  provisioner "local-exec" {
+    command     = "Invoke-WebRequest -Method Post -Uri ${var.container_uri}"
+    interpreter = ["pwsh", "-Command"]
+  }
+  depends_on = [
     null_resource.script_windows,
     null_resource.script_linux
   ]
