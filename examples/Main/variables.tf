@@ -37,7 +37,43 @@ variable "admin_password" {
 }
 
 variable "is_system_windows" {
-  type = string
+  type        = bool
+}
+
+variable "create_subnets" {
+  description = "If true, create the Subnets, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+
+variable "create_nat_gateway" {
+  description = "If true, create the NAT Gateway, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+
+variable "make_mgmt_private" {
+  description = "If true, create the Private Subnets, otherwise just use a pre-existing network."
+  default     = false
+  type        = bool
+}
+
+variable "create_virtual_network" {
+  description = "If true, create the Virtual Network, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+
+variable "create_resource_group" {
+  description = "If true, create the Resource Group, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+
+variable "create_storage_account" {
+  description = "If true, create the Storage Account, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
 }
 
 variable "network_security_groups" {
@@ -220,12 +256,12 @@ variable "avzones" {
 }
 
 variable "mgmt_nic_name" {
-  type    = string
+  type = string
   default = "Zscaler-NSS-MGMT-NIC"
 }
 
 variable "srvc_nic_name" {
-  type    = string
+  type = string
   default = "Zscaler-NSS-SRVC-NIC"
 }
 

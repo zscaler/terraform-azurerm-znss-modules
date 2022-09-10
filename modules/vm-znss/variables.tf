@@ -27,15 +27,15 @@ variable "avset_id" {
 }
 
 variable "admin_username" {
-  type = string
+   type = string
 }
 
 variable "admin_password" {
-  type = string
+   type = string
 }
 
 variable "is_system_windows" {
-  type = bool
+   type = bool
 }
 
 variable "interfaces" {
@@ -154,7 +154,7 @@ variable "avzones" {
 
 variable "storage_account_name" {
   description = "The name of the azure storage account"
-  type        = string
+    type        = string
 }
 
 variable "containers_name" {
@@ -175,5 +175,9 @@ variable "asset_container_name" {
 }
 
 variable "file_to_copy" {
+  type = string
+}
+
+variable "nat_public_ip" {
   type = string
 }
