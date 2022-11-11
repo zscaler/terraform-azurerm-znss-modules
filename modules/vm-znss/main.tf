@@ -47,24 +47,24 @@ data "azurerm_storage_account" "stdta" {
 # Azure Virtual Machine
 #-------------------------------
 resource "azurerm_virtual_machine" "this" {
-  name                             = "${var.name}-rgg"
-  location                         = var.location
-  resource_group_name              = var.resource_group_name
-  vm_size                          = var.vm_size
-  availability_set_id              = var.avset_id
-  primary_network_interface_id     = azurerm_network_interface.this[0].id
+  name                         = "${var.name}-rgg"
+  location                     = var.location
+  resource_group_name          = var.resource_group_name
+  vm_size                      = var.vm_size
+  availability_set_id          = var.avset_id
+  primary_network_interface_id = azurerm_network_interface.this[0].id
 
   network_interface_ids = [for k, v in azurerm_network_interface.this : v.id]
 
   storage_os_disk {
-    create_option     = "Attach"
-    name              = "${var.resource_group_name}_osdisk.vhd"
-    os_type           = "Linux"
-    vhd_uri           = "https://${var.storage_account_name}.blob.core.windows.net/${var.containers_name}/${var.blob_name}"
-    disk_size_gb      = "600"
-    caching           = "ReadWrite"
+    create_option = "Attach"
+    name          = "${var.resource_group_name}_osdisk.vhd"
+    os_type       = "Linux"
+    vhd_uri       = "https://${var.storage_account_name}.blob.core.windows.net/${var.containers_name}/${var.blob_name}"
+    disk_size_gb  = "600"
+    caching       = "ReadWrite"
   }
-  delete_os_disk_on_termination    = true
+  delete_os_disk_on_termination = true
   dynamic "boot_diagnostics" {
     for_each = var.diagnostics_storage_uri != null ? ["one"] : []
 
@@ -98,7 +98,7 @@ resource "null_resource" "before1" {
 #--------------------------------------------
 resource "null_resource" "delay1" {
   provisioner "local-exec" {
-    command = "start-sleep 220"
+    command     = "start-sleep 220"
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
@@ -114,7 +114,7 @@ resource "null_resource" "delay1" {
 #-------------------------------------------------
 locals {
   vm_public_ip = azurerm_public_ip.this[0].ip_address
-  gw_address = trimsuffix("${var.nat_public_ip}", "/30")
+  gw_address   = trimsuffix("${var.nat_public_ip}", "/30")
 }
 
 resource "null_resource" "script_windows1" {
@@ -128,11 +128,11 @@ resource "null_resource" "script_windows1" {
     interpreter = ["pwsh", "-Command"]
     command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/nscript.sh -o /home/zsroot/nscript.sh"
   }
-   provisioner "local-exec" {
+  provisioner "local-exec" {
     interpreter = ["pwsh", "-Command"]
     command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/executescript.sh -o /home/zsroot/executescript.sh"
   }
-   depends_on = [
+  depends_on = [
     azurerm_virtual_machine.this,
     null_resource.delay1
   ]

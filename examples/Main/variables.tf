@@ -37,7 +37,7 @@ variable "admin_password" {
 }
 
 variable "is_system_windows" {
-  type        = bool
+  type = bool
 }
 
 variable "create_subnets" {
@@ -256,12 +256,12 @@ variable "avzones" {
 }
 
 variable "mgmt_nic_name" {
-  type = string
+  type    = string
   default = "Zscaler-NSS-MGMT-NIC"
 }
 
 variable "srvc_nic_name" {
-  type = string
+  type    = string
   default = "Zscaler-NSS-SRVC-NIC"
 }
 
