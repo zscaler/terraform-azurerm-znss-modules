@@ -46,4 +46,3 @@ terraform.tfvars.json
 *.auto.tfvars.json
 *.tfplan
 tfplan.*
-
