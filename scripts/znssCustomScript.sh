@@ -23,7 +23,7 @@ SMNET_MASK=$(curl -H Metadata:true --silent "http://169.254.169.254/metadata/ins
 
 # NSS Service Interface and Default Gateway IP Configuration
 echo "Set IP Service Interface IP Address and Default Gateway"
-# SMNET_GW=192.168.100.1
+# SMNET_DFLT_GW=192.168.100.1
 smnet_dflt_gw=$1
 sudo nss configure --cliinput ${SMNET_IP}"/"${SMNET_MASK},${smnet_dflt_gw}
 echo "Successfully Applied Changes"
@@ -31,9 +31,11 @@ echo "Successfully Applied Changes"
 # Updading FreeBSD.conf Packages
 echo "Updading FreeBSD.conf Packages"
 sudo mkdir -p /usr/local/etc/pkg/repos
+sudo chmod +x /usr/local/etc/pkg/repos/FreeBSD.conf
 echo "FreeBSD: { enabled: no }" > /usr/local/etc/pkg/repos/FreeBSD.conf
 echo "FreeBSD: { url: "http://13.66.198.11/FreeBSD:11:amd64/latest/", enabled: yes}" > /usr/local/etc/pkg/repos/FreeBSD.conf
-sudo pkg update && pkg check -d -y
+sudo pkg update && pkg check -d -y 
+sudo mkdir /sc/build
 sudo mkdir /sc/build/24pkg-update
 
 # Download NSS Binaries

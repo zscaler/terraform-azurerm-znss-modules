@@ -6,7 +6,7 @@
 # It overuses the &&, &, and backslash line continuation so it could be easily converted
 # into a Dockerfile, just by adding `RUN` directives (and `COPY requirements.txt .`).
 
-# set -euo pipefail
+set -euo pipefail
 
 cd "$(dirname $0)"
 

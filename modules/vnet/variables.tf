@@ -42,6 +42,17 @@ variable "ip_prefix_name" {
   default     = "ip_prefix_1"
 }
 
+variable "create_subnets" {
+  description = "If true, create the Subnets, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+variable "create_nat_gateway" {
+  description = "If true, create the NAT Gateway, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+
 variable "network_security_groups" {
   description = <<-EOF
   Map of Network Security Groups to create. The key of each entry acts as the Network Security Group name.

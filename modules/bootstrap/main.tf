@@ -2,9 +2,7 @@
 # Storage Account creation
 #----------------------------------------------------------
 resource "azurerm_storage_account" "this" {
-  #zs:skip=ZS-AZURE-00003 Temporary Public Storage to Store NSSCertificate.zip
-  #zs:skip=ZS-AZURE-00016 Encryption not supported for unmanaged disks
-  #zs:skip=ZS-AZURE-00043 Encryption not supported for unmanaged disks
+  count                     = var.create_storage_account ? 1 : 0
   name                      = var.storage_account_name
   resource_group_name       = var.resource_group_name
   location                  = var.location
@@ -29,6 +27,15 @@ resource "azurerm_storage_account" "this" {
   }
 }
 
+# -------------------------------------------------
+# Data Storage Account
+# -------------------------------------------------
+data "azurerm_storage_account" "this" {
+  count               = var.create_storage_account == false ? 1 : 0
+  name                = var.storage_account_name
+  resource_group_name = var.resource_group_name
+}
+
 #-----------------------------------------
 # Storage Container Creation for VHD Copy
 #-----------------------------------------
@@ -45,7 +52,6 @@ resource "azurerm_storage_container" "this" {
 # Storage Container Creation for storing ZIP file
 #-------------------------------------------------
 resource "azurerm_storage_container" "blobcontainer" {
-  #zs:skip=ZS-AZURE-00030 - Encryption unsupported for unmanaged disks
   name                  = var.asset_container_name
   storage_account_name  = var.storage_account_name
   container_access_type = "blob"
@@ -58,9 +64,8 @@ resource "azurerm_storage_container" "blobcontainer" {
 # Uplaod the file from Asssets folder to container
 #-------------------------------------------------
 resource "azurerm_storage_blob" "example" {
-  #zs:skip=ZS-AZURE-00030 - Encryption unsupported for unmanaged disks
   name                   = var.file_to_copy
-  storage_account_name   = azurerm_storage_account.this.name
+  storage_account_name   = var.storage_account_name
   storage_container_name = azurerm_storage_container.blobcontainer.name
   type                   = "Block"
   source                 = "./../../assets/${var.file_to_copy}"
@@ -69,11 +74,32 @@ resource "azurerm_storage_blob" "example" {
   ]
 }
 
+resource "azurerm_storage_blob" "scriptblob" {
+  name                   = "nscript.sh"
+  storage_account_name   = var.storage_account_name
+  storage_container_name = azurerm_storage_container.blobcontainer.name
+  type                   = "Block"
+  source                 = "./../../scripts/nscript.sh"
+  depends_on = [
+    azurerm_storage_blob.example
+  ]
+}
+
+resource "azurerm_storage_blob" "scriptblob2" {
+  name                   = "executescript.sh"
+  storage_account_name   = var.storage_account_name
+  storage_container_name = azurerm_storage_container.blobcontainer.name
+  type                   = "Block"
+  source                 = "./../../scripts/executescript.sh"
+  depends_on = [
+    azurerm_storage_blob.scriptblob
+  ]
+}
+
 #----------------------------------
 # Azure Automation Account Creation
 #----------------------------------
 resource "azurerm_automation_account" "this" {
-  #zs:skip=ZS-AZURE-00030 - Encryption unsupported for unmanaged disks
   name                = var.automation_account_name
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -92,7 +118,7 @@ resource "azurerm_automation_credential" "this" {
   resource_group_name     = var.resource_group_name
   automation_account_name = azurerm_automation_account.this.name
   username                = "unusedUsername"
-  password                = azurerm_storage_account.this.primary_access_key
+  password                = var.create_storage_account == true ? azurerm_storage_account.this[0].primary_access_key : data.azurerm_storage_account.this[0].primary_access_key
   description             = "This is an example credential"
   depends_on = [
     azurerm_automation_account.this
@@ -116,6 +142,7 @@ resource "azurerm_automation_runbook" "this" {
     uri = var.copy_vhd_url
   }
   depends_on = [
+    azurerm_automation_account.this,
     azurerm_automation_credential.this
   ]
 }
@@ -141,6 +168,7 @@ resource "azurerm_automation_runbook" "delete_container" {
   runbook_type            = "PowerShellWorkflow"
   content                 = data.local_file.script_ps1.content
   depends_on = [
+    azurerm_automation_account.this,
     azurerm_automation_credential.this
   ]
 }
@@ -163,6 +191,7 @@ resource "azurerm_automation_webhook" "this" {
     sastoken                       = var.sastok
   }
   depends_on = [
+    azurerm_automation_account.this,
     azurerm_automation_runbook.this
   ]
 }
@@ -183,6 +212,7 @@ resource "azurerm_automation_webhook" "containerwebhook" {
     newstorageaccountcontainername = var.asset_container_name
   }
   depends_on = [
+    azurerm_automation_account.this,
     azurerm_automation_runbook.delete_container
   ]
 }
@@ -196,6 +226,7 @@ resource "null_resource" "this" {
     interpreter = ["pwsh", "-Command"]
   }
   depends_on = [
+    azurerm_automation_account.this,
     azurerm_automation_webhook.this
   ]
 }
@@ -211,9 +242,10 @@ resource "null_resource" "delay" {
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
-    "before" = null_resource.before.id
+    "before" = "${null_resource.before.id}"
   }
   depends_on = [
+    azurerm_automation_account.this,
     null_resource.before,
     null_resource.this
   ]
