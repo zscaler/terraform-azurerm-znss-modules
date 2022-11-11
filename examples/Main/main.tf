@@ -9,7 +9,7 @@ resource "azurerm_resource_group" "this" {
 }
 
 # ---------------------------------------------------------------
-# Data Resource Group 
+# Data Resource Group
 #---------------------------------------------------------------
 data "azurerm_resource_group" "this" {
   count = var.create_resource_group == false ? 1 : 0
@@ -67,8 +67,8 @@ module "bootstrap" {
 #---------------------------------------------------------------
 # Module for Virtual Machine and dependent resources deployment
 #----------------------------------------------------------------
-module "vm-znss" {
-  source = "../../modules/vm-znss"
+module "vm_znss" {
+  source = "../../modules/vm_znss"
 
   location             = var.location
   resource_group_name  = var.resource_group_name
