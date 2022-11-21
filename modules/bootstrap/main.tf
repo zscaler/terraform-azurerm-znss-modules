@@ -2,7 +2,6 @@
 # Storage Account creation
 #----------------------------------------------------------
 resource "azurerm_storage_account" "this" {
-  count                     = var.create_storage_account ? 1 : 0
   name                      = var.storage_account_name
   resource_group_name       = var.resource_group_name
   location                  = var.location
@@ -27,15 +26,6 @@ resource "azurerm_storage_account" "this" {
   }
 }
 
-# -------------------------------------------------
-# Data Storage Account
-# -------------------------------------------------
-data "azurerm_storage_account" "this" {
-  count               = var.create_storage_account == false ? 1 : 0
-  name                = var.storage_account_name
-  resource_group_name = var.resource_group_name
-}
-
 #-----------------------------------------
 # Storage Container Creation for VHD Copy
 #-----------------------------------------
@@ -43,7 +33,7 @@ resource "azurerm_storage_container" "this" {
   name                  = var.containers_name
   storage_account_name  = var.storage_account_name
   container_access_type = var.containers_access_type
-  depends_on = [
+   depends_on = [
     azurerm_storage_account.this
   ]
 }
@@ -55,7 +45,7 @@ resource "azurerm_storage_container" "blobcontainer" {
   name                  = var.asset_container_name
   storage_account_name  = var.storage_account_name
   container_access_type = "blob"
-  depends_on = [
+   depends_on = [
     azurerm_storage_account.this
   ]
 }
@@ -65,34 +55,12 @@ resource "azurerm_storage_container" "blobcontainer" {
 #-------------------------------------------------
 resource "azurerm_storage_blob" "example" {
   name                   = var.file_to_copy
-  storage_account_name   = var.storage_account_name
+  storage_account_name   = azurerm_storage_account.this.name
   storage_container_name = azurerm_storage_container.blobcontainer.name
   type                   = "Block"
   source                 = "./../../assets/${var.file_to_copy}"
   depends_on = [
     azurerm_storage_container.blobcontainer
-  ]
-}
-
-resource "azurerm_storage_blob" "scriptblob" {
-  name                   = "nscript.sh"
-  storage_account_name   = var.storage_account_name
-  storage_container_name = azurerm_storage_container.blobcontainer.name
-  type                   = "Block"
-  source                 = "./../../scripts/nscript.sh"
-  depends_on = [
-    azurerm_storage_blob.example
-  ]
-}
-
-resource "azurerm_storage_blob" "scriptblob2" {
-  name                   = "executescript.sh"
-  storage_account_name   = var.storage_account_name
-  storage_container_name = azurerm_storage_container.blobcontainer.name
-  type                   = "Block"
-  source                 = "./../../scripts/executescript.sh"
-  depends_on = [
-    azurerm_storage_blob.scriptblob
   ]
 }
 
@@ -118,7 +86,7 @@ resource "azurerm_automation_credential" "this" {
   resource_group_name     = var.resource_group_name
   automation_account_name = azurerm_automation_account.this.name
   username                = "unusedUsername"
-  password                = var.create_storage_account == true ? azurerm_storage_account.this[0].primary_access_key : data.azurerm_storage_account.this[0].primary_access_key
+  password                = azurerm_storage_account.this.primary_access_key
   description             = "This is an example credential"
   depends_on = [
     azurerm_automation_account.this
@@ -142,7 +110,6 @@ resource "azurerm_automation_runbook" "this" {
     uri = var.copy_vhd_url
   }
   depends_on = [
-    azurerm_automation_account.this,
     azurerm_automation_credential.this
   ]
 }
@@ -168,7 +135,6 @@ resource "azurerm_automation_runbook" "delete_container" {
   runbook_type            = "PowerShellWorkflow"
   content                 = data.local_file.script_ps1.content
   depends_on = [
-    azurerm_automation_account.this,
     azurerm_automation_credential.this
   ]
 }
@@ -184,14 +150,13 @@ resource "azurerm_automation_webhook" "this" {
   enabled                 = true
   runbook_name            = azurerm_automation_runbook.this.name
   parameters = {
-    newstorageaccountname          = var.storage_account_name
+    newstorageaccountname = var.storage_account_name
     newstorageaccountcontainername = var.containers_name
-    destvhdname                    = var.blob_name
-    vhdurl                         = var.osdisk
-    sastoken                       = var.sastok
+    destvhdname = var.blob_name
+    vhdurl = var.osdisk
+    sastoken = var.sastok
   }
   depends_on = [
-    azurerm_automation_account.this,
     azurerm_automation_runbook.this
   ]
 }
@@ -208,11 +173,10 @@ resource "azurerm_automation_webhook" "containerwebhook" {
   enabled                 = true
   runbook_name            = azurerm_automation_runbook.delete_container.name
   parameters = {
-    newstorageaccountname          = var.storage_account_name
+    newstorageaccountname = var.storage_account_name
     newstorageaccountcontainername = var.asset_container_name
   }
   depends_on = [
-    azurerm_automation_account.this,
     azurerm_automation_runbook.delete_container
   ]
 }
@@ -221,12 +185,11 @@ resource "azurerm_automation_webhook" "containerwebhook" {
 # Invoke VHD WebHook through API
 #-------------------------------
 resource "null_resource" "this" {
-  provisioner "local-exec" {
-    command     = "Invoke-WebRequest -Method Post -Uri ${azurerm_automation_webhook.this.uri}"
-    interpreter = ["pwsh", "-Command"]
-  }
-  depends_on = [
-    azurerm_automation_account.this,
+    provisioner "local-exec" {
+        command = "Invoke-WebRequest -Method Post -Uri ${azurerm_automation_webhook.this.uri}"
+        interpreter = ["pwsh", "-Command"]
+    }
+    depends_on = [
     azurerm_automation_webhook.this
   ]
 }
@@ -238,14 +201,13 @@ resource "null_resource" "before" {
 }
 resource "null_resource" "delay" {
   provisioner "local-exec" {
-    command     = "start-sleep 1800"
+    command = "start-sleep 1800"
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
     "before" = "${null_resource.before.id}"
   }
   depends_on = [
-    azurerm_automation_account.this,
     null_resource.before,
     null_resource.this
   ]

@@ -38,33 +38,28 @@ resource "azurerm_network_interface" "this" {
   ]
 }
 
-data "azurerm_storage_account" "stdta" {
-  name                = var.storage_account_name
-  resource_group_name = var.resource_group_name
-}
-
 #-------------------------------
 # Azure Virtual Machine
 #-------------------------------
 resource "azurerm_virtual_machine" "this" {
-  name                         = "${var.name}-rgg"
-  location                     = var.location
-  resource_group_name          = var.resource_group_name
-  vm_size                      = var.vm_size
-  availability_set_id          = var.avset_id
-  primary_network_interface_id = azurerm_network_interface.this[0].id
+  name                             = "${var.resource_group_name}-vm"
+  location                         = var.location
+  resource_group_name              = var.resource_group_name
+  vm_size                          = var.vm_size
+  availability_set_id              = var.avset_id
+  primary_network_interface_id     = azurerm_network_interface.this[0].id
 
   network_interface_ids = [for k, v in azurerm_network_interface.this : v.id]
 
   storage_os_disk {
-    create_option = "Attach"
-    name          = "${var.resource_group_name}_osdisk.vhd"
-    os_type       = "Linux"
-    vhd_uri       = "https://${var.storage_account_name}.blob.core.windows.net/${var.containers_name}/${var.blob_name}"
-    disk_size_gb  = "600"
-    caching       = "ReadWrite"
+    create_option     = "Attach"
+    name              = "${var.resource_group_name}_osdisk.vhd"
+    os_type           = "Linux"
+    vhd_uri           = "https://${var.storage_account_name}.blob.core.windows.net/${var.containers_name}/${var.blob_name}"
+    disk_size_gb      = "600"
+    caching           = "ReadWrite"
   }
-  delete_os_disk_on_termination = true
+  delete_os_disk_on_termination    = true
   dynamic "boot_diagnostics" {
     for_each = var.diagnostics_storage_uri != null ? ["one"] : []
 
@@ -72,10 +67,6 @@ resource "azurerm_virtual_machine" "this" {
       enabled     = true
       storage_uri = var.diagnostics_storage_uri
     }
-  }
-  boot_diagnostics {
-    enabled     = true
-    storage_uri = data.azurerm_storage_account.stdta.primary_blob_endpoint
   }
 
   identity {
@@ -98,7 +89,7 @@ resource "null_resource" "before1" {
 #--------------------------------------------
 resource "null_resource" "delay1" {
   provisioner "local-exec" {
-    command     = "start-sleep 220"
+    command = "start-sleep 120"
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
@@ -114,23 +105,14 @@ resource "null_resource" "delay1" {
 #-------------------------------------------------
 locals {
   vm_public_ip = azurerm_public_ip.this[0].ip_address
-  gw_address   = trimsuffix("${var.nat_public_ip}", "/30")
 }
 
-resource "null_resource" "script_windows1" {
+resource "null_resource" "script_windows" {
   count = var.is_system_windows ? 1 : 0
 
   provisioner "local-exec" {
     interpreter = ["pwsh", "-Command"]
     command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/${var.file_to_copy} -o /home/zsroot/${var.file_to_copy}"
-  }
-  provisioner "local-exec" {
-    interpreter = ["pwsh", "-Command"]
-    command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/nscript.sh -o /home/zsroot/nscript.sh"
-  }
-  provisioner "local-exec" {
-    interpreter = ["pwsh", "-Command"]
-    command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/executescript.sh -o /home/zsroot/executescript.sh"
   }
   depends_on = [
     azurerm_virtual_machine.this,
@@ -138,22 +120,7 @@ resource "null_resource" "script_windows1" {
   ]
 }
 
-
-resource "null_resource" "script_windows2" {
-  count = var.is_system_windows ? 1 : 0
-  provisioner "local-exec" {
-    interpreter = ["pwsh", "-Command"]
-    command     = "echo y | ../../ssh/plink.exe ${var.admin_username}@${local.vm_public_ip} -pw ${var.admin_password} sh executescript.sh ${local.gw_address} ${var.admin_password}"
-  }
-  depends_on = [
-    azurerm_virtual_machine.this,
-    null_resource.delay1,
-    null_resource.script_windows1
-  ]
-}
-
-
-resource "null_resource" "script_linux1" {
+resource "null_resource" "script_linux" {
   count = var.is_system_windows ? 0 : 1
 
   provisioner "local-exec" {
@@ -162,40 +129,11 @@ resource "null_resource" "script_linux1" {
       sshpass -p ${var.admin_password} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${var.admin_username} ${local.vm_public_ip} "curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/${var.file_to_copy} -o /home/zsroot/${var.file_to_copy}"
     EOT
   }
-  provisioner "local-exec" {
-    interpreter = ["pwsh", "-Command"]
-    command     = <<-EOT
-      sshpass -p ${var.admin_password} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${var.admin_username} ${local.vm_public_ip} "curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/nscript.sh -o /home/zsroot/nscript.sh"
-    EOT
-  }
-  provisioner "local-exec" {
-    interpreter = ["pwsh", "-Command"]
-    command     = <<-EOT
-      sshpass -p ${var.admin_password} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${var.admin_username} ${local.vm_public_ip} "curl https://${var.storage_account_name}.blob.core.windows.net/${var.asset_container_name}/executescript.sh -o /home/zsroot/executescript.sh"
-    EOT
-  }
   depends_on = [
     azurerm_virtual_machine.this,
     null_resource.delay1
   ]
 }
-
-resource "null_resource" "script_linux2" {
-  count = var.is_system_windows ? 0 : 1
-
-  provisioner "local-exec" {
-    interpreter = ["pwsh", "-Command"]
-    command     = <<-EOT
-      sshpass -p ${var.admin_password} ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -l ${var.admin_username} ${local.vm_public_ip} "sh executescript.sh ${local.gw_address} ${var.admin_password}"
-    EOT
-  }
-  depends_on = [
-    azurerm_virtual_machine.this,
-    null_resource.delay1,
-    null_resource.script_linux1
-  ]
-}
-
 
 #--------------------
 # Azure App Insight
@@ -212,16 +150,16 @@ resource "azurerm_application_insights" "this" {
 }
 
 
-# #--------------------------------------------------
-# # Invoke WebHook through API for container deletion
-# #--------------------------------------------------
-# resource "null_resource" "this" {
-#     provisioner "local-exec" {
-#         command = "Invoke-WebRequest -Method Post -Uri ${var.container_uri}"
-#         interpreter = ["pwsh", "-Command"]
-#     }
-#     depends_on = [
-#     null_resource.script_windows2,
-#     null_resource.script_linux2
-#   ]
-# }
+#--------------------------------------------------
+# Invoke WebHook through API for container deletion
+#--------------------------------------------------
+resource "null_resource" "this" {
+    provisioner "local-exec" {
+        command = "Invoke-WebRequest -Method Post -Uri ${var.container_uri}"
+        interpreter = ["pwsh", "-Command"]
+    }
+    depends_on = [
+    null_resource.script_windows,
+    null_resource.script_linux
+  ]
+}

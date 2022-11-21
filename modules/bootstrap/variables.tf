@@ -35,7 +35,7 @@ variable "tags" {
 
 variable "storage_account_name" {
   description = "The name of the azure storage account"
-  type        = string
+    type        = string
 }
 
 variable "containers_name" {
@@ -56,7 +56,7 @@ variable "account_kind" {
 
 variable "access_tier" {
   description = "Defines the access tier for BlobStorage and StorageV2 accounts. Valid options are Hot and Cool."
-  default     = "Hot"
+  default  = "Hot"
 }
 variable "account_tier" {
   description = "Defines the access tier for BlobStorage and StorageV2 accounts. Valid options are Hot and Cool."

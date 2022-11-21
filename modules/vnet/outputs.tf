@@ -23,8 +23,3 @@ output "route_table_ids" {
     for k, v in azurerm_route_table.this : k => v.id
   }
 }
-
-output "nat_public_ip" {
-  description = "The public IP address of the NAT Gateway."
-  value       = azurerm_public_ip_prefix.this.ip_prefix
-}
