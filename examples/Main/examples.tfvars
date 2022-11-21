@@ -1,4 +1,4 @@
-resource_group_name  = "RG-Canada"
+resource_group_name  = "RG-Canada01"
 location             = "Canada Central"
 virtual_network_name = "example-vnet-b"
 address_space        = ["192.168.100.0/24"]
@@ -102,12 +102,12 @@ tags = {
   provider = "terraform"
 }
 
-storage_account_name = "znssstg08132021"
+storage_account_name = "strapp31078024"
 containers_name      = "znss"
 blob_name            = "znss_osdisk.vhd"
 automation_account_name = "autaccounttest"
 copy_vhd_url = "https://raw.githubusercontent.com/zscaler/nss-azure-deploy/master/scripts/copyvhd.ps1"
-vm_name              = "Zscaler-NSS-VM"
+vm_name              = "Test-NSS-VM"
 avzones = ["1", "2", "3"]
 osdisk = "https://zsprod.blob.core.windows.net/nss/znss_5_0_osdisk.vhd"
 sastok = "?sv=2019-02-02&ss=b&srt=sco&sp=rl&se=2023-03-12T09:20:42Z&st=2020-03-12T00:20:42Z&spr=https&sig=p6OHCAv5Rxax9i1F%2BLaYBDmvUNI64VZGtDHcm9CsE0Y%3D"
@@ -121,12 +121,9 @@ admin_username = "zsroot"
 admin_password = "zsroot"
 asset_container_name = "assets"
 file_to_copy = "NssCertificate.zip"
-/*
-is_system_windows = false  // For Linux or MacOS
-CASE 1: Linux
-  sudo apt-get install sshpass
-
-CASE 2: MacOS
-  curl -L https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb > sshpass.rb && brew install sshpass.rb && rm sshpass.rb
-*/
-is_system_windows = false
+create_virtual_network = true
+create_subnets = true
+make_mgmt_private = false
+create_nat_gateway = true
+create_resource_group = true
+create_storage_account = true

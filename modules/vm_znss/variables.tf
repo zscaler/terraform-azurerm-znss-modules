@@ -177,3 +177,7 @@ variable "asset_container_name" {
 variable "file_to_copy" {
   type = string
 }
+
+variable "nat_public_ip" {
+  type = string
+}

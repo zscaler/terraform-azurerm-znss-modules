@@ -42,6 +42,17 @@ variable "ip_prefix_name" {
   default     = "ip_prefix_1"
 }
 
+variable "create_subnets" {
+  description = "If true, create the Subnets, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+variable "create_nat_gateway" {
+  description = "If true, create the NAT Gateway, otherwise just use a pre-existing network."
+  default     = true
+  type        = bool
+}
+
 variable "network_security_groups" {
   description = <<-EOF
   Map of Network Security Groups to create. The key of each entry acts as the Network Security Group name.
@@ -106,7 +117,7 @@ variable "route_tables" {
     - `address_prefix` : The destination CIDR to which the route applies, such as `10.1.0.0/16`.
     - `next_hop_type` : The type of Azure hop the packet should be sent to.
       Possible values are: `VirtualNetworkGateway`, `VnetLocal`, `Internet`, `VirtualAppliance` and `None`.
-    - `next_hop_in_ip_address` : Contains the IP address packets should be forwarded to.
+    - `next_hop_in_ip_address` : Contains the IP address packets should be forwarded to. 
       Next hop values are only allowed in routes where the next hop type is `VirtualAppliance`.
 
   Example:
@@ -146,7 +157,7 @@ variable "subnets" {
   - `network_security_group_id` : The Network Security Group identifier to associate with the subnet.
   - `route_table_id` : The Route Table identifier to associate with the subnet.
   - `tags` : (Optional) Map of tags to assign to the resource.
-
+  
   Example:
   ```
   {
