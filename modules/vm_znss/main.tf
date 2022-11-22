@@ -117,6 +117,7 @@ locals {
   gw_address = trimsuffix("${var.nat_public_ip}", "/30")
 }
 
+/*
 resource "null_resource" "script_windows1" {
   count = var.is_system_windows ? 1 : 0
 
@@ -138,7 +139,6 @@ resource "null_resource" "script_windows1" {
   ]
 }
 
-
 resource "null_resource" "script_windows2" {
   count = var.is_system_windows ? 1 : 0
   provisioner "local-exec" {
@@ -151,10 +151,10 @@ resource "null_resource" "script_windows2" {
     null_resource.script_windows1
   ]
 }
-
+*/
 
 resource "null_resource" "script_linux1" {
-  count = var.is_system_windows ? 0 : 1
+  # count = var.is_system_windows ? 0 : 1
 
   provisioner "local-exec" {
     interpreter = ["pwsh", "-Command"]
@@ -181,7 +181,7 @@ resource "null_resource" "script_linux1" {
 }
 
 resource "null_resource" "script_linux2" {
-  count = var.is_system_windows ? 0 : 1
+  # count = var.is_system_windows ? 0 : 1
 
   provisioner "local-exec" {
     interpreter = ["pwsh", "-Command"]

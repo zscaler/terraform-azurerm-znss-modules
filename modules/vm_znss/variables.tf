@@ -34,9 +34,9 @@ variable "admin_password" {
    type = string
 }
 
-variable "is_system_windows" {
-   type = bool
-}
+# variable "is_system_windows" {
+#    type = bool
+# }
 
 variable "interfaces" {
   description = <<-EOF
