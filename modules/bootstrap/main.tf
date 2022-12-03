@@ -242,7 +242,7 @@ resource "null_resource" "delay" {
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
-    "before" = "${null_resource.before.id}"
+    "before" = null_resource.before.id
   }
   depends_on = [
     azurerm_automation_account.this,

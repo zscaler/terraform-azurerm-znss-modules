@@ -102,7 +102,7 @@ resource "null_resource" "delay1" {
     interpreter = ["pwsh", "-Command"]
   }
   triggers = {
-    "before" = "${null_resource.before1.id}"
+    "before" = null_resource.before1.id
   }
   depends_on = [
     null_resource.before1
@@ -114,7 +114,7 @@ resource "null_resource" "delay1" {
 #-------------------------------------------------
 locals {
   vm_public_ip = azurerm_public_ip.this[0].ip_address
-  gw_address   = trimsuffix("${var.nat_public_ip}", "/30")
+  gw_address   = trimsuffix(var.nat_public_ip, "/30")
 }
 
 /*
