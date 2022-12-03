@@ -27,10 +27,6 @@ jobs:
       - name: Run pre-commit framework as the developer should run it
         run: sudo ./scripts/install.sh && sudo ./scripts/run.sh
 
-      - name: The `git diff` showing whether the pre-commit mandated extra changes to the repository files
-        if: failure()
-        run: git diff
-
   validate:
     name: Validate
     runs-on: ubuntu-latest
@@ -42,8 +38,7 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 0.15.0
-
+          terraform_version: 1.1.7
       - name: terraform validate
         run: |
           cd "$GITHUB_WORKSPACE"
@@ -55,48 +50,25 @@ jobs:
             terraform validate
           done
 
-  # zscaler-iac-scan:
-  #   name: Scan Terraform code with Zscaler IAC Scan
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Code Checkout
-  #       uses: actions/checkout@v2
-
-  #     - name : Zscaler IAC Scan
-  #       uses : ZscalerCWP/Zscaler-IaC-Action@v1.0.0
-  #       id: zscaler-iac-scan
-  #       with:
-  #         client_id : ${{ secrets.ZSCANNER_CLIENT_ID }}
-  #         client_secret : ${{ secrets.ZSCANNER_CLIENT_SECRET }}
-  #         region : 'US'
-  #         iac_dir : '../../'
-  #         iac_file : '../../'
-  #         output_format : 'human+github-sarif'
-  #         fail_build : 'false'
-  #     - name: Upload SARIF file
-  #       if: ${{ success() || failure() && (steps.zscaler-iac-scan.outputs.sarif_file_path != '') }}
-  #       uses: github/codeql-action/upload-sarif@v2
-  #       with:
-  #         sarif_file: ${{ steps.zscaler-iac-scan.outputs.sarif_file_path }}
-
-  release:
-    name: release
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    needs: [validate]
+  zscaler-iac-scan:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Code Checkout
         uses: actions/checkout@v2
 
-      - name: Create release and publish
-        id: release
-        uses: cycjimmy/semantic-release-action@v2
+      - name : Zscaler IAC Scan
+        uses : ZscalerCWP/Zscaler-IaC-Action@v1.2.0
+        id: zscaler-iac-scan
         with:
-          semantic_version: 17.4.2
-          extra_plugins: |
-            conventional-changelog-conventionalcommits@^4.5.0
-            @semantic-release/git@^9.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          client_id : ${{ secrets.ZSCANNER_CLIENT_ID }}
+          client_secret : ${{ secrets.ZSCANNER_CLIENT_SECRET }}
+          region : 'US'
+          iac_dir : '../../'
+          iac_file : '../../'
+          output_format : 'human+github-sarif'
+          fail_build : 'false'
+      - name: Upload SARIF file
+        if: ${{ success() || failure() && (steps.zscaler-iac-scan.outputs.sarif_file_path != '') }}
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: ${{ steps.zscaler-iac-scan.outputs.sarif_file_path }}
