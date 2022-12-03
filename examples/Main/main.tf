@@ -13,7 +13,7 @@ resource "azurerm_resource_group" "this" {
 #---------------------------------------------------------------
 data "azurerm_resource_group" "this" {
   count = var.create_resource_group == false ? 1 : 0
-  name = var.resource_group_name
+  name  = var.resource_group_name
 }
 
 #---------------------------------------------------------------
@@ -83,7 +83,7 @@ module "vm_znss" {
   asset_container_name = var.asset_container_name
   file_to_copy         = var.file_to_copy
   # is_system_windows    = var.is_system_windows
-  nat_public_ip        = module.vnet.nat_public_ip
+  nat_public_ip = module.vnet.nat_public_ip
   interfaces = [
     {
       name             = var.mgmt_nic_name

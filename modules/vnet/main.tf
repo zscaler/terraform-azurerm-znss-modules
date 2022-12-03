@@ -29,7 +29,7 @@ locals {
 # Azure Subnets
 #-----------------------
 resource "azurerm_subnet" "this" {
-  for_each = {for k , v in var.subnets : k => v if var.create_subnets}
+  for_each = { for k, v in var.subnets : k => v if var.create_subnets }
 
   name                 = each.key
   resource_group_name  = var.resource_group_name
@@ -41,7 +41,7 @@ resource "azurerm_subnet" "this" {
 # Azure Subnet Data
 # ---------------------------
 data "azurerm_subnet" "this" {
-  for_each             = {for k, v in var.subnets : k => v if var.create_subnets == false}
+  for_each = { for k, v in var.subnets : k => v if var.create_subnets == false }
 
   name                 = each.key
   resource_group_name  = var.resource_group_name
@@ -162,8 +162,8 @@ resource "azurerm_nat_gateway" "this" {
 data "azurerm_nat_gateway" "this" {
   count = var.create_nat_gateway == false ? 1 : 0
 
-  name                    = "ng${var.nat_gateway_name}"
-  resource_group_name     = var.resource_group_name
+  name                = "ng${var.nat_gateway_name}"
+  resource_group_name = var.resource_group_name
 }
 
 # ------------------------------------------------------

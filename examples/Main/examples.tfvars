@@ -102,29 +102,29 @@ tags = {
   provider = "zscaler"
 }
 
-storage_account_name = "znssstorage20221202"
-containers_name      = "znss"
-blob_name            = "znss_osdisk.vhd"
+storage_account_name    = "znssstorage20221202"
+containers_name         = "znss"
+blob_name               = "znss_osdisk.vhd"
 automation_account_name = "znssautomationaccount"
-copy_vhd_url = "https://raw.githubusercontent.com/zscaler/terraform-azurerm-znss-modules/master/scripts/copyvhd.ps1"
-vm_name              = "Zscaler-NSS-VM01"
-avzones = ["1", "2", "3"]
-osdisk = "https://zsprod.blob.core.windows.net/nss/znss_5_1_osdisk.vhd"
-sastok = "?sv=2019-02-02&ss=b&srt=sco&sp=rl&se=2023-03-12T09:20:42Z&st=2020-03-12T00:20:42Z&spr=https&sig=p6OHCAv5Rxax9i1F%2BLaYBDmvUNI64VZGtDHcm9CsE0Y%3D"
-mgmt_nic_name = "Zscaler-NSS-MGMT-NIC01"
-srvc_nic_name = "Zscaler-NSS-SRVC-NIC01"
-nat_gateway_name = "ZNSS-NAT-GW01"
-ip_prefix_name = "IP_PREFIX_01"
-pswd_auth = true
+copy_vhd_url            = "https://raw.githubusercontent.com/zscaler/terraform-azurerm-znss-modules/master/scripts/copyvhd.ps1"
+vm_name                 = "Zscaler-NSS-VM01"
+avzones                 = ["1", "2", "3"]
+osdisk                  = "https://zsprod.blob.core.windows.net/nss/znss_5_1_osdisk.vhd"
+sastok                  = "?sv=2019-02-02&ss=b&srt=sco&sp=rl&se=2023-03-12T09:20:42Z&st=2020-03-12T00:20:42Z&spr=https&sig=p6OHCAv5Rxax9i1F%2BLaYBDmvUNI64VZGtDHcm9CsE0Y%3D"
+mgmt_nic_name           = "Zscaler-NSS-MGMT-NIC01"
+srvc_nic_name           = "Zscaler-NSS-SRVC-NIC01"
+nat_gateway_name        = "ZNSS-NAT-GW01"
+ip_prefix_name          = "IP_PREFIX_01"
+pswd_auth               = true
 
 # Add virtual machine credentials here!!!
-admin_username = "zsroot"
-admin_password = "zsroot"
-asset_container_name = "assets"
-file_to_copy = "NssCertificate.zip"
+admin_username         = ""
+admin_password         = ""
+asset_container_name   = "assets"
+file_to_copy           = "NssCertificate.zip"
 create_virtual_network = true
-create_subnets = true
-make_mgmt_private = false
-create_nat_gateway = true
-create_resource_group = true
+create_subnets         = true
+make_mgmt_private      = false
+create_nat_gateway     = true
+create_resource_group  = true
 create_storage_account = true

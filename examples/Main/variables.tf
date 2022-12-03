@@ -256,12 +256,12 @@ variable "avzones" {
 }
 
 variable "mgmt_nic_name" {
-  type = string
+  type    = string
   default = "Zscaler-NSS-MGMT-NIC"
 }
 
 variable "srvc_nic_name" {
-  type = string
+  type    = string
   default = "Zscaler-NSS-SRVC-NIC"
 }
 
