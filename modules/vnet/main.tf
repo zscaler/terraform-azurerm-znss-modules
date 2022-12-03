@@ -29,12 +29,23 @@ locals {
 # Azure Subnets
 #-----------------------
 resource "azurerm_subnet" "this" {
-  for_each = var.subnets
+  for_each = {for k , v in var.subnets : k => v if var.create_subnets}
 
   name                 = each.key
   resource_group_name  = var.resource_group_name
   virtual_network_name = local.virtual_network.name
   address_prefixes     = each.value.address_prefixes
+}
+
+# ---------------------------
+# Azure Subnet Data
+# ---------------------------
+data "azurerm_subnet" "this" {
+  for_each             = {for k, v in var.subnets : k => v if var.create_subnets == false}
+
+  name                 = each.key
+  resource_group_name  = var.resource_group_name
+  virtual_network_name = local.virtual_network.name
 }
 
 #-------------------------------
@@ -135,20 +146,31 @@ resource "azurerm_public_ip_prefix" "this" {
 }
 
 resource "azurerm_nat_gateway" "this" {
+  count = var.create_nat_gateway ? 1 : 0
+
   name                    = "ng${var.nat_gateway_name}"
   location                = var.location
   resource_group_name     = var.resource_group_name
   sku_name                = "Standard"
   idle_timeout_in_minutes = 10
   zones                   = ["1"]
-  # subnet_id               = azurerm_subnet.this[each].id
+}
+
+# ------------------------------------------------------
+# Azure Data NAT Gateway
+# ------------------------------------------------------
+data "azurerm_nat_gateway" "this" {
+  count = var.create_nat_gateway == false ? 1 : 0
+
+  name                    = "ng${var.nat_gateway_name}"
+  resource_group_name     = var.resource_group_name
 }
 
 # ------------------------------------------------------
 # Azure NAT Gateway integration with IP prefix
 # ------------------------------------------------------
 resource "azurerm_nat_gateway_public_ip_prefix_association" "this" {
-  nat_gateway_id      = azurerm_nat_gateway.this.id
+  nat_gateway_id      = var.create_nat_gateway ? azurerm_nat_gateway.this[0].id : data.azurerm_nat_gateway.this[0].id
   public_ip_prefix_id = azurerm_public_ip_prefix.this.id
 }
 
@@ -158,8 +180,8 @@ resource "azurerm_nat_gateway_public_ip_prefix_association" "this" {
 resource "azurerm_subnet_nat_gateway_association" "this" {
   for_each = var.subnets
 
-  nat_gateway_id = azurerm_nat_gateway.this.id
-  subnet_id      = azurerm_subnet.this[each.key].id
+  nat_gateway_id = var.create_nat_gateway ? azurerm_nat_gateway.this[0].id : data.azurerm_nat_gateway.this[0].id
+  subnet_id      = var.create_subnets ? azurerm_subnet.this[each.key].id : data.azurerm_subnet.this[each.key].id
 }
 
 #-------------------------------------------------------
@@ -168,6 +190,6 @@ resource "azurerm_subnet_nat_gateway_association" "this" {
 resource "azurerm_subnet_network_security_group_association" "this" {
   for_each = { for k, v in var.subnets : k => v if lookup(v, "network_security_group", "") != "" }
 
-  subnet_id                 = azurerm_subnet.this[each.key].id
+  subnet_id                 = var.create_subnets ? azurerm_subnet.this[each.key].id : data.azurerm_subnet.this[each.key].id
   network_security_group_id = azurerm_network_security_group.this[each.value.network_security_group].id
 }

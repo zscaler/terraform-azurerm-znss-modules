@@ -1,6 +1,6 @@
-resource_group_name  = "RG-Canada"
+resource_group_name  = "RG-ZNSS01"
 location             = "Canada Central"
-virtual_network_name = "example-vnet-b"
+virtual_network_name = "znss-vnet-a"
 address_space        = ["192.168.100.0/24"]
 network_security_groups = {
   "network_security_group_1" = {
@@ -98,35 +98,33 @@ subnets = {
   },
 }
 tags = {
-  env      = "example",
-  provider = "terraform"
+  env      = "production",
+  provider = "zscaler"
 }
 
-storage_account_name = "znssstg08132021"
+storage_account_name = "znssstorage20221202"
 containers_name      = "znss"
 blob_name            = "znss_osdisk.vhd"
-automation_account_name = "autaccounttest"
-copy_vhd_url = "https://raw.githubusercontent.com/zscaler/nss-azure-deploy/master/scripts/copyvhd.ps1"
-vm_name              = "Zscaler-NSS-VM"
+automation_account_name = "znssautomationaccount"
+copy_vhd_url = "https://raw.githubusercontent.com/zscaler/terraform-azurerm-znss-modules/znss-%232-v0.0.1.remove-windows-support/scripts/copyvhd.ps1"
+vm_name              = "Zscaler-NSS-VM01"
 avzones = ["1", "2", "3"]
-osdisk = "https://zsprod.blob.core.windows.net/nss/znss_5_0_osdisk.vhd"
+osdisk = "https://zsprod.blob.core.windows.net/nss/znss_5_1_osdisk.vhd"
 sastok = "?sv=2019-02-02&ss=b&srt=sco&sp=rl&se=2023-03-12T09:20:42Z&st=2020-03-12T00:20:42Z&spr=https&sig=p6OHCAv5Rxax9i1F%2BLaYBDmvUNI64VZGtDHcm9CsE0Y%3D"
-mgmt_nic_name = "Zscaler-NSS-MGMT-NIC"
-srvc_nic_name = "Zscaler-NSS-SRVC-NIC"
-nat_gateway_name = "nat_gateway_1"
-ip_prefix_name = "ip_prefix_1"
+mgmt_nic_name = "Zscaler-NSS-MGMT-NIC01"
+srvc_nic_name = "Zscaler-NSS-SRVC-NIC01"
+nat_gateway_name = "ZNSS-NAT-GW01"
+ip_prefix_name = "IP_PREFIX_01"
 pswd_auth = true
+
 # Add virtual machine credentials here!!!
 admin_username = "zsroot"
 admin_password = "zsroot"
 asset_container_name = "assets"
 file_to_copy = "NssCertificate.zip"
-/*
-is_system_windows = false  // For Linux or MacOS
-CASE 1: Linux
-  sudo apt-get install sshpass
-
-CASE 2: MacOS
-  curl -L https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb > sshpass.rb && brew install sshpass.rb && rm sshpass.rb
-*/
-is_system_windows = false
+create_virtual_network = true
+create_subnets = true
+make_mgmt_private = false
+create_nat_gateway = true
+create_resource_group = true
+create_storage_account = true

@@ -34,9 +34,9 @@ variable "admin_password" {
    type = string
 }
 
-variable "is_system_windows" {
-   type = bool
-}
+# variable "is_system_windows" {
+#    type = bool
+# }
 
 variable "interfaces" {
   description = <<-EOF
@@ -175,5 +175,9 @@ variable "asset_container_name" {
 }
 
 variable "file_to_copy" {
+  type = string
+}
+
+variable "nat_public_ip" {
   type = string
 }
